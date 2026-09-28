@@ -21,9 +21,29 @@ import type {
   WastageResponse,
 } from "@/types/analytics";
 
-export const API_BASE: string =
-  (import.meta.env.VITE_API_BASE as string | undefined) ??
-  `${window.location.origin}/api`;
+/**
+ * Base URL for the backend.
+ *
+ * Both `VITE_API_BASE_URL` (the name used in .env) and `VITE_API_BASE` are
+ * accepted so a stale value in either cannot silently fall through to the
+ * origin-based default.
+ *
+ * The default only resolves correctly in dev, where Vite proxies /api to
+ * localhost:8000. A production build has no such proxy, so the backend URL
+ * must be supplied at build time (Netlify: set VITE_API_BASE_URL in the
+ * site's environment variables).
+ */
+const env = import.meta.env as Record<string, string | undefined>;
+
+export const API_BASE: string = (
+  env.VITE_API_BASE_URL ||
+  env.VITE_API_BASE ||
+  `${window.location.origin}/api`
+).replace(/\/+$/, "");
+
+export const API_BASE_IS_CONFIGURED: boolean = Boolean(
+  env.VITE_API_BASE_URL || env.VITE_API_BASE,
+);
 
 export class ApiError extends Error {
   status: number;

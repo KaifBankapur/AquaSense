@@ -1,0 +1,28 @@
+# Netlify build config for the AquaSense frontend.
+#
+# Netlify auto-detects this file's directory as the build base, so the
+# monorepo root (Python backend + Spark) is ignored here.
+#
+# Netlify hosts STATIC assets only. The FastAPI/PySpark backend needs its own
+# container host -- see README "Deployment".
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Vite emits content-hashed filenames, so these never change under a given
+# name and can be cached indefinitely.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# React Router owns every path. Without this, deep links like /dashboard or
+# /assistant hit Netlify's 404 page instead of the app.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
