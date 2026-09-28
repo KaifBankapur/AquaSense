@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aqua}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe123}
+      POSTGRES_DB: ${POSTGRES_DB:-aqua}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aqua} -d ${POSTGRES_DB:-aqua}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      # Postgres backend for application metadata
+      AQUA_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-aqua}:${POSTGRES_PASSWORD:-ChangeMe123}@postgres:5432/${POSTGRES_DB:-aqua}
+      AQUA_CORS_ORIGINS: '["http://localhost:8080","http://127.0.0.1:8080"]'
+      AQUA_AI_MODE: ${AQUA_AI_MODE:-auto}
+      AQUA_LLM_API_KEY: ${AQUA_LLM_API_KEY:-}
+      AQUA_LLM_BASE_URL: ${AQUA_LLM_BASE_URL:-https://api.openai.com/v1}
+      AQUA_LLM_MODEL: ${AQUA_LLM_MODEL:-gpt-4o-mini}
+    volumes:
+      # Serves whatever analytical layer the host pipeline generated.
+      # Run `py -3.14 scripts/run_pipeline.py` on the host FIRST, or the
+      # dashboard will show honest empty states.
+      - ./bigdata:/app/bigdata:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

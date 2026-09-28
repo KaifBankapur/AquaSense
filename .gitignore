@@ -1,0 +1,49 @@
+# ─── Secrets ────────────────────────────────────────────────────────────────
+# .env holds the live Gemini key and DB credentials. Only .env.example
+# (which has blank values) is committed.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ─── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Node / frontend ────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+npm-debug.log*
+yarn-error.log*
+
+# ─── Spark + generated data (regenerate with scripts/run_pipeline.py) ───────
+# Spark scratch/shuffle spill — hundreds of MB, never source.
+bigdata/tmp/
+# Derived data: the raw CSV is deterministic from --seed 42, and the Parquet
+# layers + analytics JSON are all rebuilt from it by the pipeline.
+bigdata/data/raw/consumption_hourly.csv
+bigdata/data/raw/generation_report.json
+bigdata/data/raw/meta_areas.json
+bigdata/data/processed/
+bigdata/outputs/
+bigdata/data/sample/
+
+# ─── Local databases ────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── OS / editor ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

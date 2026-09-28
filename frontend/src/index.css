@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 224 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 25% 12%;
+    --primary: 190 95% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 94%;
+    --secondary-foreground: 224 25% 18%;
+    --muted: 210 30% 94%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 187 82% 90%;
+    --accent-foreground: 190 95% 24%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 25% 87%;
+    --input: 214 25% 87%;
+    --ring: 190 95% 36%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 210 30% 96%;
+    --card: 221 28% 11%;
+    --card-foreground: 210 30% 96%;
+    --popover: 221 28% 11%;
+    --popover-foreground: 210 30% 96%;
+    --primary: 191 95% 42%;
+    --primary-foreground: 222 30% 8%;
+    --secondary: 220 24% 16%;
+    --secondary-foreground: 210 30% 92%;
+    --muted: 220 24% 15%;
+    --muted-foreground: 216 12% 62%;
+    --accent: 195 85% 20%;
+    --accent-foreground: 188 90% 88%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 218 22% 20%;
+    --input: 218 22% 20%;
+    --ring: 191 95% 42%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04";
+  }
+}
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/5;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/30;
+  }
+}
+
+/* ── landing template animations (21st.dev saa-s-template) ─────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── hero animations (dashboard Hero — 21st.dev / Vengeance UI) ─────────── */
+@keyframes aqua-orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius, 140px)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius, 140px)) rotate(-360deg);
+  }
+}
+
+@keyframes aqua-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--foreground)) 15%,
+      hsl(191 95% 62%) 60%,
+      hsl(188 95% 55%) 100%
+    );
+  }
+}
+
+/* assistant-ui thread look */
+.aqua-thread code {
+  @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em];
+}
+.aqua-thread table {
+  @apply my-2 w-full border-collapse text-sm;
+}
+.aqua-thread th,
+.aqua-thread td {
+  @apply border border-border px-2 py-1 text-left;
+}
+.aqua-thread th {
+  @apply bg-muted font-semibold;
+}

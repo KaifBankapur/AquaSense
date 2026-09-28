@@ -1,0 +1,32 @@
+# --- VCS / IDE ---
+.git
+.gitignore
+.vscode
+.idea
+
+# --- Local env & secrets ---
+.env
+*.db
+
+# --- Python ---
+__pycache__
+*.pyc
+.venv
+venv
+.pytest_cache
+
+# --- Frontend ---
+frontend/node_modules
+frontend/dist
+frontend/*.tsbuildinfo
+node_modules
+
+# --- Big data (generated artifacts; mounted as a volume at runtime) ---
+bigdata/data/raw
+bigdata/data/processed
+bigdata/outputs
+bigdata/tmp
+
+# --- Logs ---
+*.log
+bigdata/tmp
