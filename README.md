@@ -121,9 +121,33 @@ npm run build                    # typecheck + production build
 
 - **`local` (default, no API key):** deterministic intent router + data-backed answers
   via the same tools the API exposes. Works offline, never fabricates numbers.
-- **`llm`:** set `AQUA_LLM_API_KEY` in `.env` (OpenAI-compatible base URL + model).
-  The LLM receives tool-call results and answers in natural language.
-- **`auto`:** LLM if a key is present, otherwise local.
+- **`llm`:** set `AQUA_LLM_API_KEY` in `.env`. The LLM receives tool-call results and
+  answers in natural language — every number it reports comes from a tool result.
+- **`auto`:** LLM if a key is present, otherwise local. If the LLM call fails the
+  service silently degrades to `local`, so the assistant never hard-errors.
+
+Provider is selected with `AQUA_LLM_PROVIDER` (`gemini` or `openai`). Gemini is
+reached through Google's OpenAI-compatible endpoint, so both providers share the
+same function-calling loop and the same 13 tool schemas — no extra dependency.
+
+```bash
+AQUA_LLM_PROVIDER=gemini
+AQUA_LLM_API_KEY=<your key>
+AQUA_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+AQUA_LLM_MODEL=gemini-2.5-flash
+AQUA_LLM_MAX_TOKENS=4096
+```
+
+> `AQUA_LLM_MAX_TOKENS` needs real headroom. Gemini 2.5 spends part of the budget on
+> internal reasoning *before* it answers, and if the budget is too small the reply
+> comes back truncated mid-word (ask for "PONG" with `max_tokens=20` and you get `"P"`).
+
+Verify which mode is live:
+
+```bash
+curl http://127.0.0.1:8000/api/assistant/status
+# {"name":"AquaAI","mode":"llm","llm_configured":true,"provider":"gemini","model":"gemini-2.5-flash"}
+```
 
 ---
 
@@ -145,6 +169,68 @@ Notes:
   `AQUA_DATABASE_URL=postgresql+psycopg2://aqua:aqua@postgres:5432/aqua`.
 - Without a generated dataset the dashboard shows honest empty states instead of
   fabricated charts.
+
+---
+
+## Deployment
+
+This is a **two-service** application, and the split matters:
+
+| Service | Stack | Host |
+| --- | --- | --- |
+| `frontend/` | React + Vite → static files | Netlify (any static host) |
+| `backend/` | FastAPI + PyArrow + PySpark | a container host (Render, Railway, Fly.io) |
+
+**Netlify cannot run the backend.** Its Functions run on AWS Lambda — a 250 MB bundle
+cap, a 10 s timeout, and no Java runtime — so PySpark physically cannot execute there.
+Deploying to Netlify alone gives you the **landing page** (`/`) in full; the dashboard
+routes need the API URL below.
+
+### Frontend → Netlify
+
+`frontend/netlify.toml` is already set up (publish `dist`, `npm run build`, SPA
+redirect so React Router deep links don't 404). In the Netlify UI:
+
+- **Base directory:** `frontend`
+- **Build command:** `npm run build`
+- **Publish directory:** `frontend/dist`
+
+Then set this environment variable in Netlify, pointing at your deployed API:
+
+```
+VITE_API_BASE_URL=https://<your-api-host>/api
+```
+
+`VITE_` values are **baked into the bundle at build time**, so changing it in the
+Netlify UI requires a rebuild to take effect.
+
+Without it the client falls back to `${window.location.origin}/api`, which resolves to
+`https://<site>.netlify.app/api` and 404s against Netlify's static file server. That
+fallback only works in `npm run dev`, where Vite proxies `/api` to `localhost:8000`.
+
+### Backend → container host
+
+The backend reads the Parquet analytical layer, which is **not in git** (it's
+regenerable — see below). On a fresh host you must generate the dataset before the API
+has anything to serve:
+
+```bash
+python scripts/generate_dataset.py --seed 42
+python scripts/run_pipeline.py
+```
+
+Spark 4.2 pulls a large dependency tree, so expect a slow first build. Then set:
+
+```
+AQUA_LLM_API_KEY=<gemini key>        # omit to run the assistant in `local` mode
+AQUA_LLM_PROVIDER=gemini
+AQUA_LLM_MODEL=gemini-2.5-flash
+AQUA_CORS_ORIGINS=["https://<your-site>.netlify.app"]
+```
+
+`AQUA_CORS_ORIGINS` **must** list the Netlify domain, or the browser blocks every API
+call. All env vars are read with the `AQUA_` prefix — an unprefixed variable in the
+host's dashboard is silently ignored.
 
 ---
 
